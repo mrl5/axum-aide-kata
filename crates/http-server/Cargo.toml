@@ -1,19 +1,17 @@
 [package]
-name = "app"
-version = "0.1.0"
-edition = "2021"
+name = "http-server"
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
-docs.workspace = true
-http-server.workspace = true
-
+aide.workspace = true
 anyhow.workspace = true
 axum.workspace = true
 futures.workspace = true
 hyper.workspace = true
+schemars.workspace = true
 serde.workspace = true
 tokio.workspace = true
 tower.workspace = true
 tower-http.workspace = true
 tracing.workspace = true
-tracing-subscriber.workspace = true

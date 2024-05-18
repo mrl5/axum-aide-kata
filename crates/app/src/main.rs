@@ -1,15 +1,14 @@
-use axum::{response::Json, routing::get, Router, serve};
-use hyper::Response;
-use serde::Serialize;
+use axum::{routing::get, Extension};
+use docs::{openapi, redoc};
+use http_server::{router, server};
 use std::net::SocketAddr;
-use tokio::net::TcpListener;
-use tower::ServiceBuilder;
-use tower_http::trace::OnResponse;
-use tower_http::trace::TraceLayer;
+use std::sync::Arc;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 
 const DEFAULT_PORT: &str = "8000";
+const DOCS_PATH: &str = "/docs";
+const OAS_PATH: &str = "/openapi.json";
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -22,69 +21,15 @@ async fn main() -> anyhow::Result<()> {
     let port = std::env::var("API_PORT").unwrap_or_else(|_| DEFAULT_PORT.to_owned());
     let server_f = async {
         let address = SocketAddr::from(([0, 0, 0, 0], port.parse()?));
-        let router = get_router();
-        run_server(address, router).await?;
+        let mut api = openapi::init_openapi();
+        let router = router::get_router()
+            .route(OAS_PATH, get(openapi::serve_oas))
+            .nest(DOCS_PATH, redoc::get_router(OAS_PATH))
+            .finish_api(&mut api)
+            .layer(Extension(Arc::new(api)));
+        server::run_server(address, router, Some(DOCS_PATH)).await?;
         Ok(()) as anyhow::Result<()>
     };
     futures::try_join!(server_f)?;
     Ok(())
-}
-
-#[derive(Debug, Serialize)]
-pub struct Health {
-    status: HealthStatus,
-}
-
-#[derive(Eq, Debug, Hash, PartialEq, Serialize)]
-pub enum HealthStatus {
-    Healthy,
-}
-
-pub async fn run_healthcheck() -> Json<Health> {
-    let check = Health {
-        status: HealthStatus::Healthy,
-    };
-    tracing::info!("{:?}", check);
-    Json(check)
-}
-
-pub fn get_router() -> Router {
-    Router::new().route("/health", get(run_healthcheck))
-}
-
-pub async fn run_server(address: SocketAddr, router: Router) -> anyhow::Result<()> {
-    let middleware_stack = ServiceBuilder::new().layer(
-        TraceLayer::new_for_http()
-            .on_request(())
-            .on_response(MyOnResponse {}),
-    );
-
-    let app = router.layer(middleware_stack);
-
-    tracing::info!("Starting server ...");
-    let listener = TcpListener::bind(&address).await?;
-
-    let server = serve(listener, app.into_make_service());
-
-    println!("Server running at http://{}", address);
-    server.await?;
-    Ok(())
-}
-
-#[derive(Clone)]
-pub struct MyOnResponse {}
-
-impl<B> OnResponse<B> for MyOnResponse {
-    fn on_response(
-        self,
-        response: &Response<B>,
-        latency: std::time::Duration,
-        _span: &tracing::Span,
-    ) {
-        tracing::info!(
-            latency = latency.as_millis(),
-            status = response.status().as_u16(),
-            "response"
-        )
-    }
 }
