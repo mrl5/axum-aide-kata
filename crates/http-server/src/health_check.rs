@@ -26,7 +26,6 @@ pub async fn run_healthcheck(Extension(db): Extension<DB>) -> impl IntoApiRespon
         tracing::error!("{:?}", db_health);
         health.status = HealthStatus::Degraded;
     }
-    tracing::info!("{:?}", health);
     Json(health)
 }
 

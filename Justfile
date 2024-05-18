@@ -1,3 +1,4 @@
+set dotenv-load
 set export
 
 DOCKER_COMPOSE := "docker compose"
