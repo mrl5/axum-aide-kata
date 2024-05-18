@@ -6,7 +6,8 @@
 ## Run
 
 ```console
-just local-app
+just --dotenv-filename .env.local db-only
+just --dotenv-filename .env.local local-app
 ```
 ```console
 curl -i http://0.0.0.0:8000/health

@@ -4,3 +4,6 @@ target
 # vim
 *.swp
 tags
+
+# env
+.env
