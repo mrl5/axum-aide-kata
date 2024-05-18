@@ -4,6 +4,7 @@ use docs::{openapi, redoc};
 use http_server::{router, server};
 use std::net::SocketAddr;
 use std::sync::Arc;
+use std::time::Duration;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 
@@ -35,5 +36,15 @@ async fn main() -> anyhow::Result<()> {
         Ok(()) as anyhow::Result<()>
     };
     futures::try_join!(server_f)?;
+
+    tracing::info!("Closing database connections");
+    tokio::select! {
+        _ = db.close() => {
+            tracing::info!("Database connections closed")
+        },
+        _ = tokio::time::sleep(Duration::from_secs(5)) => {
+        }
+    }
+
     Ok(())
 }

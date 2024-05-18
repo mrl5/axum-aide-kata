@@ -7,3 +7,4 @@ edition.workspace = true
 anyhow.workspace = true
 sqlx.workspace = true
 thiserror.workspace = true
+tokio.workspace = true

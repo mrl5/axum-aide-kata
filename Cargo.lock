@@ -356,6 +356,7 @@ dependencies = [
  "anyhow",
  "sqlx",
  "thiserror",
+ "tokio",
 ]
 
 [[package]]

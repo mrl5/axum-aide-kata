@@ -1,6 +1,7 @@
 use crate::tracing::MyOnResponse;
 use axum::{serve, Extension, Router};
 use common::db::DB;
+use common::shutdown::shutdown_signal;
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tower::ServiceBuilder;
@@ -24,7 +25,7 @@ pub async fn run_server(
 
     tracing::info!("Starting server ...");
     let listener = TcpListener::bind(&address).await?;
-    let server = serve(listener, app.into_make_service());
+    let server = serve(listener, app.into_make_service()).with_graceful_shutdown(shutdown_signal());
 
     println!("Server running at http://{}", address);
     if let Some(dp) = docs_path {
