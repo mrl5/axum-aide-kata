@@ -29,13 +29,12 @@ async fn pool_db(
         .acquire_timeout(Duration::from_secs(5))
         .max_connections(max_connections)
         .max_lifetime(Duration::from_secs(5 * 60))
-        .connect(
+        .connect_lazy(
             format!(
                 "{database_url}&application_name={}",
                 app_name.unwrap_or(env!("CARGO_PKG_NAME"))
             )
             .as_str(),
         )
-        .await
         .map_err(|err| Error::ConnectingToDatabase(err.to_string()))
 }
